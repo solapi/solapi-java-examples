@@ -22,5 +22,6 @@
 
 ### Gradle
 ```groovy
+implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 implementation 'net.nurigo:sdk:4.1.4'
 ```
