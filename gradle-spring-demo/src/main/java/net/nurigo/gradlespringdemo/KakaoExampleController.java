@@ -1,4 +1,4 @@
-package net.nurigo.mavenspringdemo;
+package net.nurigo.gradlespringdemo;
 
 import net.nurigo.sdk.NurigoApp;
 import net.nurigo.sdk.message.model.*;
