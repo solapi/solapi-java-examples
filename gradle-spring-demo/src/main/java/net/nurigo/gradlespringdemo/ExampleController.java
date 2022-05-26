@@ -1,6 +1,7 @@
 package net.nurigo.gradlespringdemo;
 
 import net.nurigo.sdk.NurigoApp;
+import net.nurigo.sdk.message.exception.NurigoMessageNotReceivedException;
 import net.nurigo.sdk.message.model.Balance;
 import net.nurigo.sdk.message.model.Message;
 import net.nurigo.sdk.message.model.StorageType;
@@ -8,6 +9,7 @@ import net.nurigo.sdk.message.request.MessageListRequest;
 import net.nurigo.sdk.message.request.MultipleMessageSendingRequest;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
 import net.nurigo.sdk.message.response.MessageListResponse;
+import net.nurigo.sdk.message.response.MultipleDetailMessageSentResponse;
 import net.nurigo.sdk.message.response.MultipleMessageSentResponse;
 import net.nurigo.sdk.message.response.SingleMessageSentResponse;
 import net.nurigo.sdk.message.service.DefaultMessageService;
@@ -18,6 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 @RestController
@@ -85,7 +92,7 @@ public class ExampleController {
      * 한 번 실행으로 최대 10,000건 까지의 메시지가 발송 가능합니다.
      */
     @PostMapping("/send-many")
-    public MultipleMessageSentResponse sendMany() {
+    public MultipleDetailMessageSentResponse sendMany() {
         ArrayList<Message> messageList = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
@@ -97,14 +104,63 @@ public class ExampleController {
 
             messageList.add(message);
         }
-        MultipleMessageSendingRequest request = new MultipleMessageSendingRequest(messageList);
-        // allowDuplicates를 true로 설정하실 경우 중복으로 수신번호를 입력해도 각각 발송됩니다.
-        // request.setAllowDuplicates(true);
 
-        MultipleMessageSentResponse response = this.messageService.sendMany(request);
-        System.out.println(response);
+        try {
+            // send 메소드로 단일 Message 객체를 넣어도 동작합니다!
+            MultipleDetailMessageSentResponse response = this.messageService.send(messageList);
 
-        return response;
+            // 중복 수신번호를 허용하고 싶으실 경우 위 코드 대신 아래코드로 대체해 사용해보세요!
+            //MultipleDetailMessageSentResponse response = this.messageService.send(messageList, true);
+
+            System.out.println(response);
+
+            return response;
+        } catch (NurigoMessageNotReceivedException exception) {
+            System.out.println(exception.getFailedMessageList());
+            System.out.println(exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+        }
+        return null;
+    }
+
+
+    @PostMapping("/send-scheduled-messages")
+    public MultipleDetailMessageSentResponse sendScheduledMessages() {
+        ArrayList<Message> messageList = new ArrayList<>();
+
+        for (int i = 0; i < 3; i++) {
+            Message message = new Message();
+            // 발신번호 및 수신번호는 반드시 01012345678 형태로 입력되어야 합니다.
+            message.setFrom("발신번호 입력");
+            message.setTo("수신번호 입력");
+            message.setText("한글 45자, 영자 90자 이하 입력되면 자동으로 SMS타입의 메시지가 추가됩니다." + i);
+
+            messageList.add(message);
+        }
+
+        try {
+            // 과거 시간으로 예약 발송을 진행할 경우 즉시 발송처리 됩니다.
+            LocalDateTime localDateTime = LocalDateTime.parse("2022-05-27 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(localDateTime);
+            Instant instant = localDateTime.toInstant(zoneOffset);
+
+            // 단일 발송도 지원하여 ArrayList<Message> 객체가 아닌 Message 단일 객체만 넣어도 동작합니다!
+            MultipleDetailMessageSentResponse response = this.messageService.send(messageList, instant);
+
+            // 중복 수신번호를 허용하고 싶으실 경우 위 코드 대신 아래코드로 대체해 사용해보세요!
+            //MultipleDetailMessageSentResponse response = this.messageService.send(messageList, instant, true);
+
+            System.out.println(response);
+
+            return response;
+        } catch (NurigoMessageNotReceivedException exception) {
+            System.out.println(exception.getFailedMessageList());
+            System.out.println(exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+        }
+        return null;
     }
 
     /**

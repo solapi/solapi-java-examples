@@ -1,9 +1,11 @@
 package net.nurigo.gradlespringdemo;
 
 import net.nurigo.sdk.NurigoApp;
+import net.nurigo.sdk.message.exception.NurigoMessageNotReceivedException;
 import net.nurigo.sdk.message.model.*;
 import net.nurigo.sdk.message.request.MultipleMessageSendingRequest;
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
+import net.nurigo.sdk.message.response.MultipleDetailMessageSentResponse;
 import net.nurigo.sdk.message.response.MultipleMessageSentResponse;
 import net.nurigo.sdk.message.response.SingleMessageSentResponse;
 import net.nurigo.sdk.message.service.DefaultMessageService;
@@ -14,6 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 /**
@@ -68,11 +75,11 @@ public class KakaoExampleController {
     }
 
     /**
-     * 여러 알림톡 발송 예제
+     * 여러 메시지 발송 예제
      * 한 번 실행으로 최대 10,000건 까지의 메시지가 발송 가능합니다.
      */
     @PostMapping("/send-many-ata")
-    public MultipleMessageSentResponse sendManyAta() {
+    public MultipleDetailMessageSentResponse sendMany() {
         ArrayList<Message> messageList = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
@@ -82,34 +89,82 @@ public class KakaoExampleController {
             // 등록하신 카카오 알림톡 템플릿의 templateId를 입력해주세요.
             kakaoOption.setTemplateId("");
 
-            // 알림톡 템플릿 내에 #{변수} 형태가 존재할 경우 variables를 설정해주세요.
-            /*
-            HashMap<String, String> variables = new HashMap<>();
-            variables.put("#{변수명1}", "테스트");
-            variables.put("#{변수명2}", "치환문구 테스트2");
-            kakaoOption.setVariables(variables);
-            */
+            Message message = new Message();
+            // 발신번호 및 수신번호는 반드시 01012345678 형태로 입력되어야 합니다.
+            message.setFrom("발신번호 입력");
+            message.setTo("수신번호 입력");
+            message.setText("한글 45자, 영자 90자 이하 입력되면 자동으로 SMS타입의 메시지가 추가됩니다." + i);
+            message.setKakaoOptions(kakaoOption);
+
+            messageList.add(message);
+        }
+
+        try {
+            // send 메소드로 단일 Message 객체를 넣어도 동작합니다!
+            MultipleDetailMessageSentResponse response = this.messageService.send(messageList);
+
+            // 중복 수신번호를 허용하고 싶으실 경우 위 코드 대신 아래코드로 대체해 사용해보세요!
+            //MultipleDetailMessageSentResponse response = this.messageService.send(messageList, true);
+
+            System.out.println(response);
+
+            return response;
+        } catch (NurigoMessageNotReceivedException exception) {
+            System.out.println(exception.getFailedMessageList());
+            System.out.println(exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+        }
+        return null;
+    }
+
+    @PostMapping("/send-ata-scheduled-messages")
+    public MultipleDetailMessageSentResponse sendScheduledMessages() {
+        ArrayList<Message> messageList = new ArrayList<>();
+
+        for (int i = 0; i < 3; i++) {
+            KakaoOption kakaoOption = new KakaoOption();
+            // 등록하신 카카오 비즈니스 채널의 pfId를 입력해주세요.
+            kakaoOption.setPfId("");
+            // 등록하신 카카오 알림톡 템플릿의 templateId를 입력해주세요.
+            kakaoOption.setTemplateId("");
 
             Message message = new Message();
             // 발신번호 및 수신번호는 반드시 01012345678 형태로 입력되어야 합니다.
             message.setFrom("발신번호 입력");
             message.setTo("수신번호 입력");
+            message.setText("한글 45자, 영자 90자 이하 입력되면 자동으로 SMS타입의 메시지가 추가됩니다." + i);
+            message.setKakaoOptions(kakaoOption);
 
             messageList.add(message);
         }
 
-        MultipleMessageSendingRequest request = new MultipleMessageSendingRequest(messageList);
-        // allowDuplicates를 true로 설정하실 경우 중복으로 수신번호를 입력해도 각각 발송됩니다.
-        // request.setAllowDuplicates(true);
+        try {
+            // 과거 시간으로 예약 발송을 진행할 경우 즉시 발송처리 됩니다.
+            LocalDateTime localDateTime = LocalDateTime.parse("2022-05-27 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(localDateTime);
+            Instant instant = localDateTime.toInstant(zoneOffset);
 
-        MultipleMessageSentResponse response = this.messageService.sendMany(request);
-        System.out.println(response);
+            // 단일 발송도 지원하여 ArrayList<Message> 객체가 아닌 Message 단일 객체만 넣어도 동작합니다!
+            MultipleDetailMessageSentResponse response = this.messageService.send(messageList, instant);
 
-        return response;
+            // 중복 수신번호를 허용하고 싶으실 경우 위 코드 대신 아래코드로 대체해 사용해보세요!
+            //MultipleDetailMessageSentResponse response = this.messageService.send(messageList, instant, true);
+
+            System.out.println(response);
+
+            return response;
+        } catch (NurigoMessageNotReceivedException exception) {
+            System.out.println(exception.getFailedMessageList());
+            System.out.println(exception.getMessage());
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+        }
+        return null;
     }
 
     /**
-     * 친구톡 한건 발송 예제, send many 호환
+     * 친구톡 한건 발송 예제, send 호환, 다량 발송의 경우 위 send-many-ata 코드를 참조해보세요!
      * 친구톡 내 버튼은 최대 5개까지만 생성 가능합니다.
      */
     @PostMapping("/send-cta")
@@ -180,7 +235,7 @@ public class KakaoExampleController {
     }
 
     /**
-     * 친구톡 이미지 단건 발송, send many 호환
+     * 친구톡 이미지 단건 발송, send 호환, 다량 발송의 경우 위 send-many-ata 코드를 참조해보세요!
      * 친구톡 내 버튼은 최대 5개까지만 생성 가능합니다.
      */
     @PostMapping("/send-cti")
