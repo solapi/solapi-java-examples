@@ -12,20 +12,13 @@ OkHttp3 4.9.3 버전 이상 사용할 경우 OkHttp3 의존성 제거 가능
 ### Maven
 ```xml
 <dependency>
-    <groupId>com.squareup.okhttp3</groupId>
-    <artifactId>okhttp</artifactId>
-    <version>4.9.3</version>
-</dependency>
-
-<dependency>
     <groupId>net.nurigo</groupId>
     <artifactId>sdk</artifactId>
-    <version>4.1.4</version>
+    <version>4.2.3</version>
 </dependency>
 ```
 
 ### Gradle
 ```groovy
-implementation 'com.squareup.okhttp3:okhttp:4.9.3'
-implementation 'net.nurigo:sdk:4.1.4'
+implementation 'net.nurigo:sdk:4.2.3'
 ```
