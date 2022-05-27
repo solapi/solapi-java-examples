@@ -7,8 +7,6 @@
 
 ## 실제 개발연동 시 추가해야 할 의존성  
 
-OkHttp3 4.9.3 버전 이상 사용할 경우 OkHttp3 의존성 제거 가능  
-
 ### Maven
 ```xml
 <dependency>
