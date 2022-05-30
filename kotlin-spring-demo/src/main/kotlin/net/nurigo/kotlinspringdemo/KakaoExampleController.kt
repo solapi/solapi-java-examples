@@ -1,10 +1,10 @@
 package net.nurigo.kotlinspringdemo
 
 import net.nurigo.sdk.NurigoApp.initialize
+import net.nurigo.sdk.message.exception.NurigoMessageNotReceivedException
 import net.nurigo.sdk.message.model.*
-import net.nurigo.sdk.message.request.MultipleMessageSendingRequest
 import net.nurigo.sdk.message.request.SingleMessageSendingRequest
-import net.nurigo.sdk.message.response.MultipleMessageSentResponse
+import net.nurigo.sdk.message.response.MultipleDetailMessageSentResponse
 import net.nurigo.sdk.message.response.SingleMessageSentResponse
 import net.nurigo.sdk.message.service.DefaultMessageService
 import org.springframework.core.io.ClassPathResource
@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.io.IOException
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 
 /**
@@ -61,45 +66,88 @@ class KakaoExampleController {
     }
 
     /**
-     * 여러 알림톡 발송 예제
+     * 여러 메시지 발송 예제
      * 한 번 실행으로 최대 10,000건 까지의 메시지가 발송 가능합니다.
      */
     @PostMapping("/send-many-ata")
-    fun sendManyAta(): MultipleMessageSentResponse? {
+    fun sendMany(): MultipleDetailMessageSentResponse? {
         val messageList = ArrayList<Message>()
         for (i in 0..2) {
-            // 알림톡 템플릿 내에 #{변수} 형태가 존재할 경우 variables를 설정해주세요.
-            /*val variables = mutableMapOf<String, String>()
-            variables["#{변수명1}"] = "테스트";
-            variables["#{변수명2}"] = "치환문구 테스트2";*/
-
-            // 등록하신 카카오 비즈니스 채널의 pfId를 입력해주세요.
-            // 등록하신 카카오 알림톡 템플릿의 templateId를 입력해주세요.
             val kakaoOption = KakaoOption(
-                pfId = "pfId 입력",
-                templateId = "templateId 입력",
-
-                // disableSms를 true로 설정하실 경우 문자로 대체발송 되지 않습니다.
-                // disableSms = true,
-
-                // 알림톡 템플릿 내에 #{변수} 형태가 존재할 경우 variables를 설정해주세요.
-                // variables = variables,
+                // 등록하신 카카오 비즈니스 채널의 pfId를 입력해주세요.
+                pfId = "",
+                // 등록하신 카카오 알림톡 템플릿의 templateId를 입력해주세요.
+                templateId = ""
             )
-
             // 발신번호 및 수신번호는 반드시 01012345678 형태로 입력되어야 합니다.
             val message = Message(
                 from = "발신번호 입력",
                 to = "수신번호 입력",
+                text = "한글 45자, 영자 90자 이하 입력되면 자동으로 SMS타입의 메시지가 추가됩니다.$i",
                 kakaoOptions = kakaoOption
             )
             messageList.add(message)
         }
-        val request = MultipleMessageSendingRequest(messageList)
-        // allowDuplicates를 true로 설정하실 경우 중복으로 수신번호를 입력해도 각각 발송됩니다.
-        // request.setAllowDuplicates(true);
-        val response = messageService.sendMany(request)
-        println(response)
-        return response
+        try {
+            // send 메소드로 단일 Message 객체를 넣어도 동작합니다!
+            val response = messageService.send(messageList)
+
+            // 중복 수신번호를 허용하고 싶으실 경우 위 코드 대신 아래코드로 대체해 사용해보세요!
+            // val response = this.messageService.send(messageList, true);
+            println(response)
+            return response
+        } catch (exception: NurigoMessageNotReceivedException) {
+            println(exception.failedMessageList)
+            println(exception.message)
+        } catch (exception: Exception) {
+            println(exception.message)
+        }
+        return null
+    }
+
+    /**
+     * 예약 발송 예제(단건 및 여러 건 발송을 지원합니다)
+     */
+    @PostMapping("/send-ata-scheduled-messages")
+    fun sendScheduledMessages(): MultipleDetailMessageSentResponse? {
+        val messageList = ArrayList<Message>()
+        for (i in 0..2) {
+            val kakaoOption = KakaoOption(
+                // 등록하신 카카오 비즈니스 채널의 pfId를 입력해주세요.
+                pfId = "",
+                // 등록하신 카카오 알림톡 템플릿의 templateId를 입력해주세요.
+                templateId = ""
+            )
+            // 발신번호 및 수신번호는 반드시 01012345678 형태로 입력되어야 합니다.
+            val message = Message(
+                from = "발신번호 입력",
+                to = "수신번호 입력",
+                text = "한글 45자, 영자 90자 이하 입력되면 자동으로 SMS타입의 메시지가 추가됩니다.$i",
+                kakaoOptions = kakaoOption
+            )
+            messageList.add(message)
+        }
+        try {
+            // 과거 시간으로 예약 발송을 진행할 경우 즉시 발송처리 됩니다.
+            val localDateTime: LocalDateTime =
+                LocalDateTime.parse("2022-05-27 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            val zoneOffset: ZoneOffset = ZoneId.systemDefault().rules.getOffset(localDateTime)
+            val instant: Instant = localDateTime.toInstant(zoneOffset)
+
+            // 단일 발송도 지원하여 ArrayList<Message> 객체가 아닌 Message 단일 객체만 넣어도 동작합니다!
+            val response: MultipleDetailMessageSentResponse = messageService.send(messageList, instant)
+
+            // 중복 수신번호를 허용하고 싶으실 경우 위 코드 대신 아래코드로 대체해 사용해보세요!
+            // val response = this.messageService.send(messageList, instant, true);
+            println(response)
+            return response
+        } catch (exception: NurigoMessageNotReceivedException) {
+            println(exception.failedMessageList)
+            println(exception.message)
+        } catch (exception: Exception) {
+            println(exception.message)
+        }
+        return null
     }
 
     /**
