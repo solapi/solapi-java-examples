@@ -87,7 +87,6 @@ class ExampleController {
 
     /**
      * 단일 메시지 발송 예제
-     * 메시지 사용가능 파라미터는 아래 링크를 참고해주세요
      */
     @PostMapping("/send-one")
     fun sendOne(): SingleMessageSentResponse? {
