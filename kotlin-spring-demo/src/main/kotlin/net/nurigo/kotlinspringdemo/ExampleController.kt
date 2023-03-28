@@ -87,6 +87,7 @@ class ExampleController {
 
     /**
      * 단일 메시지 발송 예제
+     * 메시지 사용가능 파라미터는 아래 링크를 참고해주세요
      */
     @PostMapping("/send-one")
     fun sendOne(): SingleMessageSentResponse? {
@@ -95,6 +96,7 @@ class ExampleController {
             from = "발신번호 입력",
             to = "수신번호 입력",
             text = "한글 45자, 영자 90자 이하 입력되면 자동으로 SMS타입의 메시지가 추가됩니다."
+            // country = "국가번호"
         )
         val response = messageService.sendOne(SingleMessageSendingRequest(message))
         println(response)
@@ -118,6 +120,7 @@ class ExampleController {
             to = "수신번호 입력",
             text = "한글 45자, 영자 90자 이하 입력되면 자동으로 SMS타입의 메시지가 추가됩니다.",
             imageId = imageId
+            // country = "국가번호"
         )
 
         // 여러 건 메시지 발송일 경우 send many 예제와 동일하게 구성하여 발송할 수 있습니다.
@@ -139,6 +142,7 @@ class ExampleController {
                 from = "발신번호 입력",
                 to = "수신번호 입력",
                 text = "한글 45자, 영자 90자 이하 입력되면 자동으로 SMS타입의 메시지가 추가됩니다.$i"
+                // country = "국가번호"
             )
             messageList.add(message)
         }
@@ -171,6 +175,7 @@ class ExampleController {
                 from = "발신번호 입력",
                 to = "수신번호 입력",
                 text = "한글 45자, 영자 90자 이하 입력되면 자동으로 SMS타입의 메시지가 추가됩니다.$i"
+                // country = "국가번호"
             )
             messageList.add(message)
         }
