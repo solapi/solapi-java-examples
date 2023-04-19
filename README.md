@@ -11,7 +11,7 @@
 <dependency>
     <groupId>net.nurigo</groupId>
     <artifactId>sdk</artifactId>
-    <version>4.2.4</version>
+    <version>4.3.0</version>
 </dependency>
 ```
 
