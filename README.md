@@ -17,10 +17,10 @@
 
 ### Gradle
 ```groovy
-implementation 'net.nurigo:sdk:4.2.4'
+implementation 'net.nurigo:sdk:4.3.0'
 ```
 
 ### Gradle(kotlin)
 ```kotlin
-implementation("net.nurigo:sdk:4.2.4")
+implementation("net.nurigo:sdk:4.3.0")
 ```
