@@ -1,4 +1,4 @@
-package net.nurigo.gradlespringdemo;
+package com.solapi.gradlespringdemo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,12 +1,17 @@
-package net.nurigo.gradlespringdemo;
+package com.solapi.gradlespringdemo;
 
-import net.nurigo.sdk.NurigoApp;
-import net.nurigo.sdk.message.exception.NurigoMessageNotReceivedException;
-import net.nurigo.sdk.message.model.*;
-import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
-import net.nurigo.sdk.message.response.MultipleDetailMessageSentResponse;
-import net.nurigo.sdk.message.response.SingleMessageSentResponse;
-import net.nurigo.sdk.message.service.DefaultMessageService;
+import com.solapi.sdk.SolapiClient;
+import com.solapi.sdk.message.dto.request.SendRequestConfig;
+import com.solapi.sdk.message.dto.response.MultipleDetailMessageSentResponse;
+import com.solapi.sdk.message.exception.SolapiEmptyResponseException;
+import com.solapi.sdk.message.exception.SolapiMessageNotReceivedException;
+import com.solapi.sdk.message.exception.SolapiUnknownException;
+import com.solapi.sdk.message.model.Message;
+import com.solapi.sdk.message.model.StorageType;
+import com.solapi.sdk.message.model.kakao.KakaoButton;
+import com.solapi.sdk.message.model.kakao.KakaoButtonType;
+import com.solapi.sdk.message.model.kakao.KakaoOption;
+import com.solapi.sdk.message.service.DefaultMessageService;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,14 +41,14 @@ public class KakaoExampleController {
      */
     public KakaoExampleController() {
         // 반드시 계정 내 등록된 유효한 API 키, API Secret Key를 입력해주셔야 합니다!
-        this.messageService = NurigoApp.INSTANCE.initialize("INSERT_API_KEY", "INSERT_API_SECRET_KEY", "https://api.solapi.com");
+        this.messageService = SolapiClient.INSTANCE.createInstance("INSERT_API_KEY", "INSERT_API_SECRET_KEY");
     }
 
     /**
      * 알림톡 한건 발송 예제
      */
     @PostMapping("/send-one-ata")
-    public SingleMessageSentResponse sendOneAta() {
+    public MultipleDetailMessageSentResponse sendOneAta() throws SolapiEmptyResponseException, SolapiUnknownException, SolapiMessageNotReceivedException {
         KakaoOption kakaoOption = new KakaoOption();
         // disableSms를 true로 설정하실 경우 문자로 대체발송 되지 않습니다.
         // kakaoOption.setDisableSms(true);
@@ -67,7 +72,7 @@ public class KakaoExampleController {
         message.setTo("수신번호 입력");
         message.setKakaoOptions(kakaoOption);
 
-        SingleMessageSentResponse response = this.messageService.sendOne(new SingleMessageSendingRequest(message));
+        MultipleDetailMessageSentResponse response = this.messageService.send(message);
         System.out.println(response);
 
         return response;
@@ -96,7 +101,7 @@ public class KakaoExampleController {
             message.setKakaoOptions(kakaoOption);
 
             // 기본적으로 실패 시 같은 내용으로 문자 전송을 요청하나,
-            // 같은 내용이 아닌 다른 내용으로 대체발송을 원한다면 replacements 값을 설정해줍니다.
+            // 같은 내용이 아닌 다른 내용으로 대체발송을 원한다면 replacements값을 설정해줍니다.
             /*
             Message replacementMessage = new Message();
             replacementMessage.setFrom("발신번호 입력");
@@ -120,7 +125,7 @@ public class KakaoExampleController {
             System.out.println(response);
 
             return response;
-        } catch (NurigoMessageNotReceivedException exception) {
+        } catch (SolapiMessageNotReceivedException exception) {
             System.out.println(exception.getFailedMessageList());
             System.out.println(exception.getMessage());
         } catch (Exception exception) {
@@ -156,8 +161,11 @@ public class KakaoExampleController {
             ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(localDateTime);
             Instant instant = localDateTime.toInstant(zoneOffset);
 
+            SendRequestConfig config = new SendRequestConfig();
+            config.setScheduledDate(instant);
+
             // 단일 발송도 지원하여 ArrayList<Message> 객체가 아닌 Message 단일 객체만 넣어도 동작합니다!
-            MultipleDetailMessageSentResponse response = this.messageService.send(messageList, instant);
+            MultipleDetailMessageSentResponse response = this.messageService.send(messageList, config);
 
             // 중복 수신번호를 허용하고 싶으실 경우 위 코드 대신 아래코드로 대체해 사용해보세요!
             //MultipleDetailMessageSentResponse response = this.messageService.send(messageList, instant, true);
@@ -165,7 +173,7 @@ public class KakaoExampleController {
             System.out.println(response);
 
             return response;
-        } catch (NurigoMessageNotReceivedException exception) {
+        } catch (SolapiMessageNotReceivedException exception) {
             System.out.println(exception.getFailedMessageList());
             System.out.println(exception.getMessage());
         } catch (Exception exception) {
@@ -179,14 +187,13 @@ public class KakaoExampleController {
      * 친구톡 내 버튼은 최대 5개까지만 생성 가능합니다.
      */
     @PostMapping("/send-cta")
-    public SingleMessageSentResponse sendOneCta() {
+    public MultipleDetailMessageSentResponse sendOneCta() throws SolapiEmptyResponseException, SolapiUnknownException, SolapiMessageNotReceivedException {
         KakaoOption kakaoOption = new KakaoOption();
         // disableSms를 true로 설정하실 경우 문자로 대체발송 되지 않습니다.
         // kakaoOption.setDisableSms(true);
 
         // 등록하신 카카오 비즈니스 채널의 pfId를 입력해주세요.
         kakaoOption.setPfId("");
-        kakaoOption.setVariables(null);
 
         // 친구톡에 버튼을 넣으실 경우에만 추가해주세요.
         ArrayList<KakaoButton> kakaoButtons = new ArrayList<>();
@@ -239,7 +246,7 @@ public class KakaoExampleController {
         message.setText("친구톡 테스트 메시지");
         message.setKakaoOptions(kakaoOption);
 
-        SingleMessageSentResponse response = this.messageService.sendOne(new SingleMessageSendingRequest(message));
+        MultipleDetailMessageSentResponse response = this.messageService.send(message);
         System.out.println(response);
 
         return response;
@@ -250,7 +257,7 @@ public class KakaoExampleController {
      * 친구톡 내 버튼은 최대 5개까지만 생성 가능합니다.
      */
     @PostMapping("/send-cti")
-    public SingleMessageSentResponse sendOneCti() throws IOException {
+    public MultipleDetailMessageSentResponse sendOneCti() throws IOException, SolapiEmptyResponseException, SolapiUnknownException, SolapiMessageNotReceivedException {
         ClassPathResource resource = new ClassPathResource("static/cti.jpg");
         File file = resource.getFile();
         // 이미지 크기는 가로 500px 세로 250px 이상이어야 합니다, 링크도 필수로 기입해주세요.
@@ -263,7 +270,6 @@ public class KakaoExampleController {
         // 등록하신 카카오 비즈니스 채널의 pfId를 입력해주세요.
         kakaoOption.setPfId("");
         kakaoOption.setImageId(imageId);
-        kakaoOption.setVariables(null);
 
         Message message = new Message();
         // 발신번호 및 수신번호는 반드시 01012345678 형태로 입력되어야 합니다.
@@ -272,7 +278,7 @@ public class KakaoExampleController {
         message.setText("테스트");
         message.setKakaoOptions(kakaoOption);
 
-        SingleMessageSentResponse response = this.messageService.sendOne(new SingleMessageSendingRequest(message));
+        MultipleDetailMessageSentResponse response = this.messageService.send(message);
         System.out.println(response);
 
         return response;

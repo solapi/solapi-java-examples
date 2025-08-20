@@ -1,4 +1,4 @@
-package net.nurigo.kotlinspringdemo
+package com.solapi.kotlinspringdemo
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
