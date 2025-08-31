@@ -11,16 +11,16 @@
 <dependency>
     <groupId>com.solapi</groupId>
     <artifactId>sdk</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 ### Gradle
 ```groovy
-implementation 'com.solapi:sdk:1.0.0'
+implementation 'com.solapi:sdk:1.0.1'
 ```
 
 ### Gradle(kotlin)
 ```kotlin
-implementation("com.solapi:sdk:1.0.0")
+implementation("com.solapi:sdk:1.0.1")
 ```
