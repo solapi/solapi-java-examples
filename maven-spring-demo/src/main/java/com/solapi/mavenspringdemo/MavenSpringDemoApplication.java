@@ -1,4 +1,4 @@
-package net.nurigo.mavenspringdemo;
+package com.solapi.mavenspringdemo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

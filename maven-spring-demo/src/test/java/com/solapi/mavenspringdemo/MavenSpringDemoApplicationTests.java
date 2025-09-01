@@ -1,4 +1,4 @@
-package net.nurigo.mavenspringdemo;
+package com.solapi.mavenspringdemo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

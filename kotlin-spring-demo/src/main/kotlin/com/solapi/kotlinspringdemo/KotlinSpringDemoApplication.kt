@@ -1,4 +1,4 @@
-package net.nurigo.kotlinspringdemo
+package com.solapi.kotlinspringdemo
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
