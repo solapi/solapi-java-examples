@@ -11,6 +11,7 @@ import com.solapi.sdk.message.exception.SolapiUnknownException;
 import com.solapi.sdk.message.model.Balance;
 import com.solapi.sdk.message.model.Message;
 import com.solapi.sdk.message.model.StorageType;
+import com.solapi.sdk.message.model.voice.VoiceOption;
 import com.solapi.sdk.message.service.DefaultMessageService;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -224,9 +225,50 @@ public class ExampleController {
      */
     @GetMapping("/get-balance")
     public Balance getBalance() {
-        Balance balance = this.messageService.getBalance();
-        System.out.println(balance);
+        return this.messageService.getBalance();
+    }
 
-        return balance;
+    /**
+     * 음성 메시지 발송 예제
+     * <a href="https://developers.solapi.com/references/voice">음성 메시지 설명 문서</a>
+     * @return MultipleDetailMessageSentResponse
+     */
+    @PostMapping("/send-voice-message")
+    public MultipleDetailMessageSentResponse sendVoiceMessage() {
+        try {
+            VoiceOption voiceOption = new VoiceOption();
+
+            /// 세부적인 음성 메시지 옵션을 설정하고 싶으신 경우, 아래 코드들을 참고 해주세요!
+
+            /// 음성 메시지 성별 유형, 기본값은 VoiceType.FEMALE 입니다.
+            // voiceOption.setVoiceType(VoiceType.MALE);
+
+            /// 음성 메시지를 수신자가 받을 때 맨 처음에 나오는 음성 메시지 머릿말
+            // voiceOption.setHeaderMessage("처음에 소개할 음성 메시지 내용 입력");
+
+            /// 음성 메시지가 끝날 때 마지막에 안내하는 음성 메시지 꼬릿말
+            // voiceOption.setTailMessage("음성 메시지 마지막에 안내할 음성 메시지 내용 입력");
+
+            /// 수신자가 입력할 수 있는 다이얼 범위(1~9), 해당 옵션은 counselorNumber와 혼용 할 수 없습니다!
+            // voiceOption.setReplyRange(VoiceReplyRange.NINE.getValue());
+
+            /// 수신자가 0번을 입력했을 때 전화를 걸 고객센터 번호, 해당 옵션은 ReplyRange와 혼용 할 수 없습니다!
+            // voiceOption.setCounselorNumber("수신자가 다이얼 0번 입력 시 보낼 고객센터 전화번호 입력");
+
+            Message message = new Message();
+
+            message.setFrom("등록한 발신번호 입력");
+            message.setTo("보낼 휴대전화 번호(수신번호) 입력");
+            message.setText("음성 메시지에서 TTS로 나올 내용 입력");
+
+            message.setVoiceOptions(voiceOption);
+            return this.messageService.send(message);
+        } catch (SolapiMessageNotReceivedException e) {
+            System.out.println(e.getFailedMessageList());
+            System.out.println(e.getMessage());
+        } catch (SolapiUnknownException | SolapiEmptyResponseException e) {
+            System.out.println(e.getMessage());
+        }
+        return null;
     }
 }

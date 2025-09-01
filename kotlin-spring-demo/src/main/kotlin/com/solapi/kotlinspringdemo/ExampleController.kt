@@ -11,6 +11,7 @@ import com.solapi.sdk.message.exception.SolapiUnknownException
 import com.solapi.sdk.message.model.Balance
 import com.solapi.sdk.message.model.Message
 import com.solapi.sdk.message.model.StorageType
+import com.solapi.sdk.message.model.voice.VoiceOption
 import com.solapi.sdk.message.service.DefaultMessageService
 import org.springframework.core.io.ClassPathResource
 import org.springframework.web.bind.annotation.GetMapping
@@ -28,13 +29,13 @@ import java.time.format.DateTimeFormatter
 class ExampleController {
     // 반드시 계정 내 등록된 유효한 API 키, API Secret Key를 입력해주셔야 합니다!
     val messageService: DefaultMessageService =
-        SolapiClient.INSTANCE.createInstance("INSERT_API_KEY", "INSERT_API_SECRET_KEY")
+        SolapiClient.createInstance("INSERT_API_KEY", "INSERT_API_SECRET_KEY")
 
     /**
      * 메시지 조회 예제
      */
     @GetMapping("/get-message-list")
-    fun getMessageList(): MessageListResponse {
+    fun getMessageList(): MessageListResponse? {
         // 검색 조건이 있는 경우에 MessagListRequest를 초기화 하여 getMessageList 함수에 파라미터로 넣어서 검색할 수 있습니다!.
         // 수신번호와 발신번호는 반드시 -,* 등의 특수문자를 제거한 01012345678 형식으로 입력해주셔야 합니다!
         val request = MessageListRequest()
@@ -211,8 +212,52 @@ class ExampleController {
      */
     @GetMapping("/get-balance")
     fun getBalance(): Balance {
-        val balance = messageService.getBalance()
-        println(balance)
-        return balance
+        return messageService.getBalance()
+    }
+
+    /**
+     * 음성 메시지 발송 예제
+     * <a href="https://developers.solapi.com/references/voice">음성 메시지 설명 문서</a>
+     * @return MultipleDetailMessageSentResponse
+     */
+    @PostMapping("/send-voice-message")
+    fun sendVoiceMessage(): MultipleDetailMessageSentResponse? {
+        try {
+            val voiceOption = VoiceOption()
+
+            // 세부적인 음성 메시지 옵션을 설정하고 싶으신 경우, 아래 코드들을 참고 해주세요!
+
+            // 음성 메시지 성별 유형, 기본값은 VoiceType.FEMALE 입니다.
+            // voiceOption.voiceType = VoiceType.MALE
+
+            // 음성 메시지를 수신자가 받을 때 맨 처음에 나오는 음성 메시지 머릿말
+            // voiceOption.headerMessage = "처음에 소개할 음성 메시지 내용 입력"
+
+            // 음성 메시지가 끝날 때 마지막에 안내하는 음성 메시지 꼬릿말
+            // voiceOption.tailMessage = "음성 메시지 마지막에 안내할 음성 메시지 내용 입력"
+
+            // 수신자가 입력할 수 있는 다이얼 범위(1~9), 해당 옵션은 counselorNumber와 혼용 할 수 없습니다!
+            // voiceOption.replyRange = VoiceReplyRange.NINE.value
+
+            // 수신자가 0번을 입력했을 때 전화를 걸 고객센터 번호, 해당 옵션은 ReplyRange와 혼용 할 수 없습니다!
+            // voiceOption.counselorNumber = "수신자가 다이얼 0번 입력 시 보낼 고객센터 전화번호 입력"
+
+            val message = Message()
+
+            message.from = "등록한 발신번호 입력"
+            message.to = "보낼 휴대전화 번호(수신번호) 입력"
+            message.text = "음성 메시지에서 TTS로 나올 내용 입력"
+
+            message.voiceOptions = voiceOption
+            return messageService.send(message)
+        } catch (e: SolapiMessageNotReceivedException) {
+            println(e.failedMessageList)
+            println(e.message)
+        } catch (e: SolapiUnknownException) {
+            println(e.message)
+        } catch (e: SolapiEmptyResponseException) {
+            println(e.message)
+        }
+        return null
     }
 }
