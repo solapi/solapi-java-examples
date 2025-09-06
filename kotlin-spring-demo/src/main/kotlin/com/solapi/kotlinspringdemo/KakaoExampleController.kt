@@ -19,7 +19,10 @@ import com.solapi.sdk.message.service.DefaultMessageService
 import org.springframework.core.io.ClassPathResource
 import org.springframework.web.bind.annotation.*
 import java.io.IOException
-import java.time.*
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 /**
@@ -292,6 +295,10 @@ class KakaoExampleController {
             val kakaoOption = KakaoOption()
             kakaoOption.pfId = "연동한 비즈니스 채널의 pfId"
             kakaoOption.templateId = "등록한 브랜드 메시지 템플릿의 템플릿 ID"
+
+            val kakaoBmsOption = KakaoBmsOption()
+            kakaoBmsOption.targeting = KakaoBmsTargeting.I
+            kakaoOption.bms = kakaoBmsOption
 
             // 브랜드 메시지 템플릿 내 치환문구(#{변수명}) 형식이 있다면 아래와 같은 코드를 추가해주세요!
             // val variables = mutableMapOf<String, String>()

@@ -311,6 +311,10 @@ public class KakaoExampleController {
             kakaoOption.setPfId("연동한 비즈니스 채널의 pfId");
             kakaoOption.setTemplateId("등록한 브랜드 메시지 템플릿의 템플릿 ID");
 
+            KakaoBmsOption kakaoBmsOption = new KakaoBmsOption();
+            kakaoBmsOption.setTargeting(KakaoBmsTargeting.I);
+            kakaoOption.setBms(kakaoBmsOption);
+
             /// 브랜드 메시지 템플릿 내 치환문구(#{변수명}) 형식이 있다면 아래와 같은 코드를 추가해주세요!
             // HashMap<String, String> variables = new HashMap<>();
             // variables.put("#{변수명1}", "홍길동");
